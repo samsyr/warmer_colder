@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Warmer / Colder",
+    "slug": "warmer-colder-poc",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0E0E12"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Warmer / Colder uses your location to tell you whether you are getting closer to or farther from your chosen target."
+      }
+    },
+    "android": {
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Warmer / Colder uses your location to tell you whether you are getting closer to or farther from your chosen target."
+        }
+      ],
+      "expo-asset"
+    ],
+    "experiments": {
+      "reactCompiler": true
+    }
+  }
+}
