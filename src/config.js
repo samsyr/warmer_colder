@@ -16,3 +16,12 @@ export const LANGUAGE = 'en';
 
 // Name of the plain-text track file (in the app document directory).
 export const TRACK_FILENAME = 'track.txt';
+
+// Speech quality tuning (spec §9).
+// rate: 0.75 is slower than the OS default of 1.0 — easier to catch outdoors.
+// pitch: 1.0 is neutral; lower toward 0.9 for a slightly deeper voice.
+// voice: null lets the OS pick its best available voice. Set to a voice identifier
+//        string (from Speech.getAvailableVoicesAsync) to force a specific engine.
+export const SPEECH_RATE  = 0.75;
+export const SPEECH_PITCH = 1.0;
+export const SPEECH_VOICE = null;

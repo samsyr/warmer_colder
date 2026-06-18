@@ -11,7 +11,7 @@ import {
 } from '../config';
 import { PHRASES } from '../phrases';
 import { haversineMeters } from '../utils/geo';
-import { say } from '../utils/speech';
+import { say, sayAndWait } from '../utils/speech';
 import { appendPoint, resetTrack } from '../utils/track';
 
 const phrases = PHRASES[LANGUAGE] || PHRASES.en;
@@ -113,7 +113,7 @@ export function useWarmerColder(target, onArrive) {
     setTrend(null);
     setDistance(null);
     setStatus('tracking');
-    say(phrases.start);
+    await sayAndWait(phrases.start);
 
     await tick(); // first reading immediately
     intervalRef.current = setInterval(tick, CONTROL_INTERVAL_MS);
