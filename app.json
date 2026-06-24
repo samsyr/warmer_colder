@@ -35,7 +35,8 @@
           "locationWhenInUsePermission": "Warmer / Colder uses your location to tell you whether you are getting closer to or farther from your chosen target."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-localization"
     ],
     "experiments": {
       "reactCompiler": true

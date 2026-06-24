@@ -11,12 +11,14 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import { validateCoordinate } from '../utils/geo';
+import { RandomDestinationPicker } from '../utils/RandomDestinationPicker';
 
 export default function SetupScreen({ onStart }) {
   const [lat, setLat] = useState('');
   const [lon, setLon] = useState('');
   const [error, setError] = useState(null);
   const [locating, setLocating] = useState(false);
+  const [picking, setPicking] = useState(false);
 
   const useCurrent = async () => {
     setError(null);
@@ -36,6 +38,29 @@ export default function SetupScreen({ onStart }) {
       setError('Could not read your current location. Try again outdoors.');
     } finally {
       setLocating(false);
+    }
+  };
+
+  const pickRandom = async () => {
+    setError(null);
+    setPicking(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError('Location permission is required to pick a random destination.');
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const picker = new RandomDestinationPicker(pos.coords);
+      const dest = picker.pick();
+      setLat(dest.latitude.toFixed(6));
+      setLon(dest.longitude.toFixed(6));
+    } catch (e) {
+      setError('Could not read your current location. Try again outdoors.');
+    } finally {
+      setPicking(false);
     }
   };
 
@@ -84,11 +109,19 @@ export default function SetupScreen({ onStart }) {
           autoCorrect={false}
         />
 
-        <Pressable style={styles.secondary} onPress={useCurrent} disabled={locating}>
+        <Pressable style={styles.secondary} onPress={useCurrent} disabled={locating || picking}>
           {locating ? (
             <ActivityIndicator color="#F5EFE6" />
           ) : (
             <Text style={styles.secondaryText}>Use my current location</Text>
+          )}
+        </Pressable>
+
+        <Pressable style={styles.secondary} onPress={pickRandom} disabled={locating || picking}>
+          {picking ? (
+            <ActivityIndicator color="#F5EFE6" />
+          ) : (
+            <Text style={styles.secondaryText}>Pick random destination nearby</Text>
           )}
         </Pressable>
 
