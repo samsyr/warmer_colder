@@ -11,7 +11,8 @@ import {
 } from '../config';
 import { PHRASES } from '../phrases';
 import { haversineMeters } from '../utils/geo';
-import { say } from '../utils/speech';
+import { say, sayAndWait } from '../utils/speech';
+import { UI } from '../i18n';
 import { appendPoint, resetTrack } from '../utils/track';
 
 const phrases = PHRASES[LANGUAGE] || PHRASES.en;
@@ -87,7 +88,7 @@ export function useWarmerColder(target, onArrive) {
       prevDistance.current = d;
     } catch (e) {
       // A single failed reading must not end the session.
-      setNotice('Skipped a reading (no GPS fix). Trying again.');
+      setNotice(UI.hook.noticeSkipped);
     } finally {
       inFlight.current = false;
     }
@@ -100,9 +101,7 @@ export function useWarmerColder(target, onArrive) {
     const { status: perm } =
       await Location.requestForegroundPermissionsAsync();
     if (perm !== 'granted') {
-      setError(
-        'Location permission is required. Enable it in settings and try again.'
-      );
+      setError(UI.hook.errPermission);
       setStatus('error');
       return;
     }
@@ -113,7 +112,7 @@ export function useWarmerColder(target, onArrive) {
     setTrend(null);
     setDistance(null);
     setStatus('tracking');
-    say(phrases.start);
+    await sayAndWait(phrases.start);
 
     await tick(); // first reading immediately
     intervalRef.current = setInterval(tick, CONTROL_INTERVAL_MS);

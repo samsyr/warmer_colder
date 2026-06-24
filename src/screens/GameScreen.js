@@ -1,14 +1,15 @@
 import { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useWarmerColder } from '../hooks/useWarmerColder';
+import { UI } from '../i18n';
 
 // Signature element (frontend-design): the whole screen takes on the
 // temperature of the feedback — ember-warm when warmer, slate-cold when colder.
 const THEME = {
-  warmer: { bg: '#2A0E06', accent: '#FF8A4C', word: 'WARMER' },
-  colder: { bg: '#06121F', accent: '#4DA8FF', word: 'COLDER' },
-  same: { bg: '#15151C', accent: '#9A9AA6', word: 'NO CHANGE' },
-  idle: { bg: '#0E0E12', accent: '#9A9AA6', word: '—' },
+  warmer: { bg: '#2A0E06', accent: '#FF8A4C', word: UI.game.warmer },
+  colder: { bg: '#06121F', accent: '#4DA8FF', word: UI.game.colder },
+  same:   { bg: '#15151C', accent: '#9A9AA6', word: UI.game.noChange },
+  idle:   { bg: '#0E0E12', accent: '#9A9AA6', word: '—' },
 };
 
 export default function GameScreen({ target, onArrive, onStop }) {
@@ -32,7 +33,7 @@ export default function GameScreen({ target, onArrive, onStop }) {
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={styles.top}>
         <Text style={[styles.trendWord, { color: theme.accent }]}>
-          {error ? 'ERROR' : theme.word}
+          {error ? UI.game.error : theme.word}
         </Text>
       </View>
 
@@ -44,18 +45,18 @@ export default function GameScreen({ target, onArrive, onStop }) {
             <Text style={[styles.distance, { color: theme.accent }]}>
               {distance == null ? '···' : distance}
             </Text>
-            <Text style={styles.unit}>metres to go · as the crow flies</Text>
+            <Text style={styles.unit}>{UI.game.unit}</Text>
           </>
         )}
       </View>
 
       <View style={styles.bottom}>
         <Text style={styles.meta}>
-          {pointCount} {pointCount === 1 ? 'reading' : 'readings'} · every 10 s
+          {pointCount} {pointCount === 1 ? UI.game.reading : UI.game.readings} {UI.game.interval}
         </Text>
         {notice ? <Text style={styles.notice}>{notice}</Text> : null}
         <Pressable style={styles.stop} onPress={stopNow}>
-          <Text style={styles.stopText}>Stop</Text>
+          <Text style={styles.stopText}>{UI.game.btnStop}</Text>
         </Pressable>
       </View>
     </View>
