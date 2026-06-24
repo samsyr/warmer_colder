@@ -1,5 +1,6 @@
 import { View, Text, Pressable, StyleSheet, Platform, BackHandler } from 'react-native';
 import { getTrackUri } from '../utils/track';
+import { UI } from '../i18n';
 
 export default function ArrivedScreen({ target, onRestart }) {
   // The original concept ends with the app closing. A clean self-exit is not
@@ -13,25 +14,24 @@ export default function ArrivedScreen({ target, onRestart }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.badge}>FOUND IT</Text>
-      <Text style={styles.title}>You reached the target.</Text>
+      <Text style={styles.badge}>{UI.arrived.badge}</Text>
+      <Text style={styles.title}>{UI.arrived.title}</Text>
       <Text style={styles.subtitle}>
-        Within 100 metres of {target.latitude.toFixed(5)},{' '}
-        {target.longitude.toFixed(5)}.
+        {UI.arrived.subtitle(target.latitude.toFixed(5), target.longitude.toFixed(5))}
       </Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardLabel}>TRACK SAVED TO</Text>
+        <Text style={styles.cardLabel}>{UI.arrived.trackLabel}</Text>
         <Text style={styles.cardValue}>{getTrackUri()}</Text>
       </View>
 
       <Pressable style={styles.primary} onPress={onRestart}>
-        <Text style={styles.primaryText}>Start over</Text>
+        <Text style={styles.primaryText}>{UI.arrived.btnStartOver}</Text>
       </Pressable>
 
       {Platform.OS === 'android' ? (
         <Pressable style={styles.secondary} onPress={exit}>
-          <Text style={styles.secondaryText}>Close app</Text>
+          <Text style={styles.secondaryText}>{UI.arrived.btnClose}</Text>
         </Pressable>
       ) : null}
     </View>

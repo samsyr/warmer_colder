@@ -15,7 +15,9 @@ export const MIN_DELTA_M = 3;
 
 // Speak device default language, but fall back to English if the app doesn't
 // have a phrase set for that language.
-export const LANGUAGE = Localization.locale.split('-')[0];
+
+export const LANGUAGE = Localization.getLocales()?.[0]?.languageCode ?? 'en';
+//export const LANGUAGE = 'fi';
 
 // Name of the plain-text track file (in the app document directory).
 export const TRACK_FILENAME = 'track.txt';

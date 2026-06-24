@@ -1,5 +1,7 @@
 // Great-circle ("as the crow flies") distance via the haversine formula (spec §8).
 
+import { UI } from '../i18n';
+
 const EARTH_RADIUS_M = 6371000;
 
 const toRad = (deg) => (deg * Math.PI) / 180;
@@ -27,16 +29,16 @@ export function validateCoordinate(latStr, lonStr) {
   const lat = Number(latStr);
   const lon = Number(lonStr);
   if (latStr.trim() === '' || lonStr.trim() === '') {
-    return 'Enter both latitude and longitude.';
+    return UI.geo.errBothRequired;
   }
   if (Number.isNaN(lat) || Number.isNaN(lon)) {
-    return 'Latitude and longitude must be numbers.';
+    return UI.geo.errNotNumbers;
   }
   if (lat < -90 || lat > 90) {
-    return 'Latitude must be between -90 and 90.';
+    return UI.geo.errLatRange;
   }
   if (lon < -180 || lon > 180) {
-    return 'Longitude must be between -180 and 180.';
+    return UI.geo.errLonRange;
   }
   return null;
 }
