@@ -13,15 +13,19 @@
       "**/*"
     ],
     "ios": {
+      "bundleIdentifier": "com.samponen.warmercolder",
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Warmer / Colder uses your location to tell you whether you are getting closer to or farther from your chosen target."
+        "NSLocationWhenInUseUsageDescription": "Warmer / Colder uses your location to tell you whether you are getting closer to or farther from your chosen target.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "plugins": [
@@ -35,6 +39,12 @@
     ],
     "experiments": {
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ac839bc7-d0fd-4b5b-919b-30c49cbee100"
+      }
+    },
+    "owner": "samponen"
   }
 }
