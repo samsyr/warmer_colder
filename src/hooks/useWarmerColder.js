@@ -7,14 +7,11 @@ import {
   CONTROL_INTERVAL_MS,
   ARRIVAL_RADIUS_M,
   MIN_DELTA_M,
-  LANGUAGE,
 } from '../config';
-import { PHRASES } from '../phrases';
 import { haversineMeters } from '../utils/geo';
 import { say, sayAndWait } from '../utils/speech';
 import { appendPoint, resetTrack } from '../utils/track';
-
-const phrases = PHRASES[LANGUAGE] || PHRASES.en;
+import { voicePhrases as phrases } from '../voices';
 
 /**
  * @param {{latitude:number, longitude:number}} target
