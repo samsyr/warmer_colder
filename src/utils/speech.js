@@ -14,14 +14,15 @@ const OPTIONS = {
 };
 
 export function say(text) {
+  if (!text) return;
   Speech.stop();
   Speech.speak(text, OPTIONS);
 }
 
 // Like say(), but returns a Promise that resolves when the utterance finishes
-// (or is stopped/errors). Use when the caller must wait for speech to complete
-// before proceeding (e.g. the start announcement before the first tick).
+// (or is stopped/errors). Resolves immediately for null/empty text.
 export function sayAndWait(text) {
+  if (!text) return Promise.resolve();
   Speech.stop();
   return new Promise((resolve) => {
     Speech.speak(text, { ...OPTIONS, onDone: resolve, onStopped: resolve, onError: resolve });
