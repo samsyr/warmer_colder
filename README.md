@@ -21,6 +21,25 @@ Then scan the QR code with the **Expo Go** app on your phone, go outside, and wa
 > Needs a physical device (and being outdoors) for a real GPS fix. A simulator
 > can be fed a mock location but won't move realistically.
 
+## Running on web (dev/testing only)
+
+Web is **not a production target** — it exists only for fast manual testing of UI
+and logic in a desktop browser (no QR-code round-trip, plus React DevTools).
+
+```bash
+npx expo start --web        # serves on http://localhost:8081
+```
+
+Then grant the browser's location prompt to exercise the tracking loop. For
+component/profiler inspection, install the **React Developer Tools** Chrome
+extension — it hooks into the page automatically; reload and use the *Components*
+/ *Profiler* tabs in DevTools.
+
+Web-only compromises are isolated in `*.web.js` files (Metro resolves these for
+the web platform automatically), so production/native code never carries web
+shims. Currently that's `src/utils/track.web.js`: `expo-file-system` has no web
+support, so the web build keeps the track in memory instead of writing to disk.
+
 ## How it works
 1. **Setup** — type the target latitude/longitude, or tap *Use my current
    location* to grab a test target.
@@ -44,7 +63,9 @@ src/screens/                SetupScreen, GameScreen, ArrivedScreen
 src/hooks/useWarmerColder.js core loop (permissions, interval, compare, speak, log)
 src/utils/geo.js            haversine distance + coordinate validation
 src/utils/speech.js         text-to-speech wrapper
-src/utils/track.js          plain-text track logging
+src/utils/track.js          plain-text track logging (native/production)
+src/utils/track.web.js      in-memory track stub for the web dev/test build
+src/utils/trackFormat.js    shared control-point line formatter (both targets)
 ```
 
 ## Notes / limitations (PoC)

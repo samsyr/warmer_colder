@@ -4,30 +4,24 @@
 //
 // expo-file-system has no native append, so we keep the lines in memory and
 // rewrite the file each tick. Fine for a PoC-length session.
+//
+// This is the production (native) implementation. The web dev/testing target
+// uses track.web.js instead — Metro resolves that automatically for web.
 
-import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import { TRACK_FILENAME } from '../config';
+import { formatPoint } from './trackFormat';
 
-// expo-file-system's File/Paths API is not supported on web. Degrade to an
-// in-memory-only track there, and create the file lazily so importing this
-// module never throws during web bundle evaluation.
-const fileSupported = Platform.OS !== 'web';
-let file = null;
-function getFile() {
-  if (fileSupported && !file) file = new File(Paths.document, TRACK_FILENAME);
-  return file;
-}
-
+const file = new File(Paths.document, TRACK_FILENAME);
 let lines = [];
 
 export function getTrackUri() {
-  return getFile()?.uri ?? null;
+  return file.uri;
 }
 
 export function resetTrack() {
   lines = [];
-  getFile()?.write('');
+  file.write('');
 }
 
 /**
@@ -36,13 +30,6 @@ export function resetTrack() {
  * @param {number} distanceM rounded distance to target in metres
  */
 export function appendPoint(coords, distanceM) {
-  const line = [
-    new Date().toISOString(),
-    coords.latitude.toFixed(6),
-    coords.longitude.toFixed(6),
-    distanceM,
-  ].join('\t');
-
-  lines.push(line);
-  getFile()?.write(lines.join('\n') + '\n');
+  lines.push(formatPoint(coords, distanceM));
+  file.write(lines.join('\n') + '\n');
 }
