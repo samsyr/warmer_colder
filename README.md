@@ -35,10 +35,30 @@ component/profiler inspection, install the **React Developer Tools** Chrome
 extension — it hooks into the page automatically; reload and use the *Components*
 / *Profiler* tabs in DevTools.
 
+### eval-free static export (for strict-CSP browsers)
+
+The dev server (`expo start --web`) uses `eval()` for fast-refresh and lazy
+module loading. Browsers/extensions enforcing a strict Content-Security-Policy
+(no `'unsafe-eval'`) will log *"…blocks the use of 'eval'…"*. If you hit that,
+serve the **production export** instead — it has no HMR/lazy loading, so it runs
+eval-free under any CSP:
+
+```bash
+./serve_web.sh            # exports to dist/, serves at http://localhost:8080
+```
+
+Trade-off: no fast refresh — re-run the script after code changes.
+
+### web/native code separation
+
 Web-only compromises are isolated in `*.web.js` files (Metro resolves these for
 the web platform automatically), so production/native code never carries web
-shims. Currently that's `src/utils/track.web.js`: `expo-file-system` has no web
-support, so the web build keeps the track in memory instead of writing to disk.
+shims:
+- `src/utils/track.web.js` — `expo-file-system` has no web support, so the web
+  build keeps the track in memory instead of writing to disk.
+- `src/utils/demoJitter.web.js` — you can't physically walk at a desk, so on web
+  the measured distance is jittered ±25 m each reading to exercise the
+  warmer/colder trend. Native uses the identity `demoJitter.js`.
 
 ## How it works
 1. **Setup** — type the target latitude/longitude, or tap *Use my current
