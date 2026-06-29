@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."   # repo root (script lives in script/)
 
 echo "==> Killing running servers..."
 
@@ -30,4 +30,5 @@ npm install
 npx expo install --fix
 
 echo "==> Starting..."
-exec ./start.sh
+# Forwards any args to expo start (e.g. pass --go for Expo Go).
+exec ./script/start.sh "$@"
