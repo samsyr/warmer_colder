@@ -11,12 +11,15 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import { validateCoordinate } from '../utils/geo';
+import { RandomDestinationPicker } from '../utils/RandomDestinationPicker';
+import { UI } from '../i18n';
 
 export default function SetupScreen({ onStart }) {
   const [lat, setLat] = useState('');
   const [lon, setLon] = useState('');
   const [error, setError] = useState(null);
   const [locating, setLocating] = useState(false);
+  const [picking, setPicking] = useState(false);
 
   const useCurrent = async () => {
     setError(null);
@@ -24,7 +27,7 @@ export default function SetupScreen({ onStart }) {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError('Location permission is required to use your position.');
+        setError(UI.setup.errPermission);
         return;
       }
       const pos = await Location.getCurrentPositionAsync({
@@ -33,9 +36,32 @@ export default function SetupScreen({ onStart }) {
       setLat(pos.coords.latitude.toFixed(6));
       setLon(pos.coords.longitude.toFixed(6));
     } catch (e) {
-      setError('Could not read your current location. Try again outdoors.');
+      setError(UI.setup.errLocation);
     } finally {
       setLocating(false);
+    }
+  };
+
+  const pickRandom = async () => {
+    setError(null);
+    setPicking(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError(UI.setup.errPermissionRandom);
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const picker = new RandomDestinationPicker(pos.coords);
+      const dest = picker.pick();
+      setLat(dest.latitude.toFixed(6));
+      setLon(dest.longitude.toFixed(6));
+    } catch (e) {
+      setError(UI.setup.errLocation);
+    } finally {
+      setPicking(false);
     }
   };
 
@@ -55,14 +81,11 @@ export default function SetupScreen({ onStart }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.inner}>
-        <Text style={styles.eyebrow}>WARMER / COLDER</Text>
-        <Text style={styles.title}>Where are we headed?</Text>
-        <Text style={styles.subtitle}>
-          Enter the target coordinates. From there, the only guidance is warmer
-          or colder.
-        </Text>
+        <Text style={styles.eyebrow}>{UI.setup.eyebrow}</Text>
+        <Text style={styles.title}>{UI.setup.title}</Text>
+        <Text style={styles.subtitle}>{UI.setup.subtitle}</Text>
 
-        <Text style={styles.label}>Latitude</Text>
+        <Text style={styles.label}>{UI.setup.labelLat}</Text>
         <TextInput
           style={styles.input}
           value={lat}
@@ -73,7 +96,7 @@ export default function SetupScreen({ onStart }) {
           autoCorrect={false}
         />
 
-        <Text style={styles.label}>Longitude</Text>
+        <Text style={styles.label}>{UI.setup.labelLon}</Text>
         <TextInput
           style={styles.input}
           value={lon}
@@ -84,18 +107,26 @@ export default function SetupScreen({ onStart }) {
           autoCorrect={false}
         />
 
-        <Pressable style={styles.secondary} onPress={useCurrent} disabled={locating}>
+        <Pressable style={styles.secondary} onPress={useCurrent} disabled={locating || picking}>
           {locating ? (
             <ActivityIndicator color="#F5EFE6" />
           ) : (
-            <Text style={styles.secondaryText}>Use my current location</Text>
+            <Text style={styles.secondaryText}>{UI.setup.btnCurrentLocation}</Text>
+          )}
+        </Pressable>
+
+        <Pressable style={styles.secondary} onPress={pickRandom} disabled={locating || picking}>
+          {picking ? (
+            <ActivityIndicator color="#F5EFE6" />
+          ) : (
+            <Text style={styles.secondaryText}>{UI.setup.btnRandom}</Text>
           )}
         </Pressable>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <Pressable style={styles.primary} onPress={start}>
-          <Text style={styles.primaryText}>Start</Text>
+          <Text style={styles.primaryText}>{UI.setup.btnStart}</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

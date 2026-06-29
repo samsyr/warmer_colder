@@ -1,3 +1,5 @@
+import * as Localization from 'expo-localization';
+
 // All tunable parameters live here (spec §9). Change them in one place.
 
 // Time between control points, in milliseconds. Default: 10 seconds.
@@ -11,8 +13,11 @@ export const ARRIVAL_RADIUS_M = 100;
 // Set to 0 for the literal warmer-or-colder behaviour of the original game.
 export const MIN_DELTA_M = 3;
 
-// Spoken language / phrase set: 'en' or 'fi'.
-export const LANGUAGE = 'en';
+// Speak device default language, but fall back to English if the app doesn't
+// have a phrase set for that language.
+
+export const LANGUAGE = Localization.getLocales()?.[0]?.languageCode ?? 'en';
+//export const LANGUAGE = 'fi';
 
 // Name of the plain-text track file (in the app document directory).
 export const TRACK_FILENAME = 'track.txt';
