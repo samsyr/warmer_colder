@@ -5,19 +5,29 @@
 // expo-file-system has no native append, so we keep the lines in memory and
 // rewrite the file each tick. Fine for a PoC-length session.
 
+import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import { TRACK_FILENAME } from '../config';
 
-const file = new File(Paths.document, TRACK_FILENAME);
+// expo-file-system's File/Paths API is not supported on web. Degrade to an
+// in-memory-only track there, and create the file lazily so importing this
+// module never throws during web bundle evaluation.
+const fileSupported = Platform.OS !== 'web';
+let file = null;
+function getFile() {
+  if (fileSupported && !file) file = new File(Paths.document, TRACK_FILENAME);
+  return file;
+}
+
 let lines = [];
 
 export function getTrackUri() {
-  return file.uri;
+  return getFile()?.uri ?? null;
 }
 
 export function resetTrack() {
   lines = [];
-  file.write('');
+  getFile()?.write('');
 }
 
 /**
@@ -34,5 +44,5 @@ export function appendPoint(coords, distanceM) {
   ].join('\t');
 
   lines.push(line);
-  file.write(lines.join('\n') + '\n');
+  getFile()?.write(lines.join('\n') + '\n');
 }
