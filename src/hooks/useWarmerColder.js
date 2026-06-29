@@ -14,6 +14,7 @@ import { haversineMeters } from '../utils/geo';
 import { say, sayAndWait } from '../utils/speech';
 import { UI } from '../i18n';
 import { appendPoint, resetTrack } from '../utils/track';
+import { applyDemoJitter } from '../utils/demoJitter';
 
 const phrases = PHRASES[LANGUAGE] || PHRASES.en;
 
@@ -51,7 +52,9 @@ export function useWarmerColder(target, onArrive) {
         latitude: pos.coords.latitude,
         longitude: pos.coords.longitude,
       };
-      const d = haversineMeters(here, target);
+      // No-op on native; the web dev/test build jitters this to fake movement.
+      const d = applyDemoJitter(haversineMeters(here, target));
+
       const dRounded = Math.round(d);
       setDistance(dRounded);
       setNotice(null);
