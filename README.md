@@ -59,6 +59,12 @@ shims:
 - `src/utils/demoJitter.web.js` — you can't physically walk at a desk, so on web
   the measured distance is jittered ±25 m each reading to exercise the
   warmer/colder trend. Native uses the identity `demoJitter.js`.
+- `src/utils/speech.web.js` — drives the browser Web Speech API directly,
+  handling its quirks (async voice loading, the autoplay/gesture lock, the
+  cancel-before-speak race) and never stalling the loop if no voices exist.
+  Native uses `speech.js` (expo-speech). Note: browsers with no installed TTS
+  voices (common with Chrome on Linux without a configured audio server) stay
+  silent — that's the environment, not the app.
 
 ## How it works
 1. **Setup** — type the target latitude/longitude, or tap *Use my current
