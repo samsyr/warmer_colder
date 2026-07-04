@@ -6,7 +6,7 @@ import * as Localization from 'expo-localization';
 export const CONTROL_INTERVAL_MS = 10000;
 
 // Arrival radius, in metres. Inside this distance the target is "found".
-export const ARRIVAL_RADIUS_M = 100;
+export const ARRIVAL_RADIUS_M = 50;
 
 // Dead-band, in metres. Distance changes smaller than this are treated as
 // "no significant change", which suppresses GPS jitter while standing still.
