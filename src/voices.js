@@ -2,7 +2,18 @@
 // The spoken cue is built from three parts:
 //   <trend word>  <number>  <unit>     e.g. "Lämpenee. 305 metriä."
 
-const deviceLocale = Intl.DateTimeFormat().resolvedOptions().locale; // e.g. 'fi-FI'
+import * as Localization from 'expo-localization';
+
+// Prefer the app's own preferred-language detection (same source config.js
+// uses for the UI text) over Intl.DateTimeFormat's resolved locale: Intl reads
+// the OS/ICU default locale, which tracks the device's system language and can
+// disagree with the app's preferred language — e.g. an iPhone with only
+// Finnish added to the app's supported languages shows Finnish UI text (via
+// Localization.getLocales()) while Intl still resolves to the system default
+// (often English). Falling back to Intl only if expo-localization has nothing.
+const deviceLocale =
+  Localization.getLocales()?.[0]?.languageTag ??
+  Intl.DateTimeFormat().resolvedOptions().locale; // e.g. 'fi-FI'
 export const deviceTTSLocale = deviceLocale;
 
 const voiceLang = deviceLocale.split('-')[0].toLowerCase(); // 'fi' from 'fi-FI'
