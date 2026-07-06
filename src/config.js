@@ -6,12 +6,20 @@ import * as Localization from 'expo-localization';
 export const CONTROL_INTERVAL_MS = 10000;
 
 // Arrival radius, in metres. Inside this distance the target is "found".
-export const ARRIVAL_RADIUS_M = 100;
+export const ARRIVAL_RADIUS_M = 50;
 
-// Dead-band, in metres. Distance changes smaller than this are reported as
-// "no change", which suppresses GPS jitter while standing still.
+// Dead-band, in metres. Distance changes smaller than this are treated as
+// "no significant change", which suppresses GPS jitter while standing still.
 // Set to 0 for the literal warmer-or-colder behaviour of the original game.
 export const MIN_DELTA_M = 3;
+
+// The original game has no "no change" state — every cue is warmer or colder.
+// When a reading lands inside the dead-band we fall back to the last status
+// (which starts as "warmer", so an opening dead-band reading becomes warmer).
+// This flag only controls the VOICE for those dead-band readings:
+//   true  → speak the last status aloud (e.g. "Warmer. 305 metres").
+//   false → stay silent, but still update the on-screen distance and trend.
+export const SPEAK_ON_NO_CHANGE = true;
 
 // Speak device default language, but fall back to English if the app doesn't
 // have a phrase set for that language.

@@ -23,6 +23,18 @@ export function haversineMeters(a, b) {
 }
 
 /**
+ * Parses a coordinate string like "(26.53484, 60.483931)" where the first
+ * value is longitude and the second is latitude (Google Maps copy-paste format).
+ * Strips all non-numeric characters except minus and dot before splitting.
+ * Returns { latStr, lonStr } or null if the input can't be parsed.
+ */
+export function parseCoordinateInput(str) {
+  const nums = (str || '').match(/-?\d+(?:\.\d+)?/g);
+  if (!nums || nums.length < 2) return null;
+  return { latStr: nums[0], lonStr: nums[1] };
+}
+
+/**
  * Basic coordinate validation. Returns null if valid, or an error string.
  */
 export function validateCoordinate(latStr, lonStr) {

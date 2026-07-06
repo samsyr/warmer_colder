@@ -10,13 +10,12 @@ import {
   Platform,
 } from 'react-native';
 import * as Location from 'expo-location';
-import { validateCoordinate } from '../utils/geo';
+import { parseCoordinateInput, validateCoordinate } from '../utils/geo';
 import { RandomDestinationPicker } from '../utils/RandomDestinationPicker';
 import { UI } from '../i18n';
 
 export default function SetupScreen({ onStart }) {
-  const [lat, setLat] = useState('');
-  const [lon, setLon] = useState('');
+  const [coords, setCoords] = useState('');
   const [error, setError] = useState(null);
   const [locating, setLocating] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -33,8 +32,7 @@ export default function SetupScreen({ onStart }) {
       const pos = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
-      setLat(pos.coords.latitude.toFixed(6));
-      setLon(pos.coords.longitude.toFixed(6));
+      setCoords(`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`);
     } catch (e) {
       setError(UI.setup.errLocation);
     } finally {
@@ -56,8 +54,7 @@ export default function SetupScreen({ onStart }) {
       });
       const picker = new RandomDestinationPicker(pos.coords);
       const dest = picker.pick();
-      setLat(dest.latitude.toFixed(6));
-      setLon(dest.longitude.toFixed(6));
+      setCoords(`${dest.latitude.toFixed(6)}, ${dest.longitude.toFixed(6)}`);
     } catch (e) {
       setError(UI.setup.errLocation);
     } finally {
@@ -66,13 +63,18 @@ export default function SetupScreen({ onStart }) {
   };
 
   const start = () => {
-    const err = validateCoordinate(lat, lon);
+    const parsed = parseCoordinateInput(coords);
+    if (!parsed) {
+      setError(UI.geo.errFormat);
+      return;
+    }
+    const err = validateCoordinate(parsed.latStr, parsed.lonStr);
     if (err) {
       setError(err);
       return;
     }
     setError(null);
-    onStart({ latitude: Number(lat), longitude: Number(lon) });
+    onStart({ latitude: Number(parsed.latStr), longitude: Number(parsed.lonStr) });
   };
 
   return (
@@ -85,26 +87,16 @@ export default function SetupScreen({ onStart }) {
         <Text style={styles.title}>{UI.setup.title}</Text>
         <Text style={styles.subtitle}>{UI.setup.subtitle}</Text>
 
-        <Text style={styles.label}>{UI.setup.labelLat}</Text>
+        <Text style={styles.label}>{UI.setup.labelCoords}</Text>
         <TextInput
           style={styles.input}
-          value={lat}
-          onChangeText={setLat}
-          placeholder="60.169857"
+          value={coords}
+          onChangeText={setCoords}
+          placeholder="60.169857, 24.938379"
           placeholderTextColor="#5A5A66"
           keyboardType="numbers-and-punctuation"
           autoCorrect={false}
-        />
-
-        <Text style={styles.label}>{UI.setup.labelLon}</Text>
-        <TextInput
-          style={styles.input}
-          value={lon}
-          onChangeText={setLon}
-          placeholder="24.938379"
-          placeholderTextColor="#5A5A66"
-          keyboardType="numbers-and-punctuation"
-          autoCorrect={false}
+          autoCapitalize="none"
         />
 
         <Pressable style={styles.secondary} onPress={useCurrent} disabled={locating || picking}>

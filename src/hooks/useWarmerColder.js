@@ -7,16 +7,14 @@ import {
   CONTROL_INTERVAL_MS,
   ARRIVAL_RADIUS_M,
   MIN_DELTA_M,
-  LANGUAGE,
+  SPEAK_ON_NO_CHANGE,
 } from '../config';
-import { PHRASES } from '../phrases';
 import { haversineMeters } from '../utils/geo';
 import { say, sayAndWait } from '../utils/speech';
 import { UI } from '../i18n';
 import { appendPoint, resetTrack } from '../utils/track';
 import { applyDemoJitter } from '../utils/demoJitter';
-
-const phrases = PHRASES[LANGUAGE] || PHRASES.en;
+import { voicePhrases as phrases } from '../voices';
 
 /**
  * @param {{latitude:number, longitude:number}} target
@@ -30,7 +28,8 @@ export function useWarmerColder(target, onArrive) {
   const [notice, setNotice] = useState(null); // non-fatal status message
   const [error, setError] = useState(null); // fatal message
 
-  const prevDistance = useRef(null);
+  const lastDistance = useRef(null); // last committed distance; trend baseline
+  const lastStatus = useRef('warmer'); // resolves dead-band readings; never 'same'
   const intervalRef = useRef(null);
   const inFlight = useRef(false);
 
@@ -71,24 +70,35 @@ export function useWarmerColder(target, onArrive) {
         return;
       }
 
-      // Trend vs. previous control point.
-      if (prevDistance.current == null) {
+      // Trend vs. the last committed control point. There is no "no change"
+      // state: a dead-band reading inherits the last status (default 'warmer')
+      // AND its distance, so the spoken/shown number never contradicts the word.
+      if (lastDistance.current == null) {
+        lastDistance.current = dRounded;
         setTrend(null);
         say(phrases.first(dRounded));
       } else {
-        const delta = prevDistance.current - d; // positive => got closer
+        const delta = lastDistance.current - d; // positive => closer than baseline
         if (delta > MIN_DELTA_M) {
+          lastStatus.current = 'warmer';
+          lastDistance.current = dRounded;
           setTrend('warmer');
           say(phrases.warmer(dRounded));
         } else if (delta < -MIN_DELTA_M) {
+          lastStatus.current = 'colder';
+          lastDistance.current = dRounded;
           setTrend('colder');
           say(phrases.colder(dRounded));
         } else {
-          setTrend('same');
-          say(phrases.same(dRounded));
+          // No significant change since the baseline: reuse its distance and
+          // status. UI always updates; voice only if SPEAK_ON_NO_CHANGE.
+          setTrend(lastStatus.current);
+          setDistance(lastDistance.current);
+          if (SPEAK_ON_NO_CHANGE) {
+            say(phrases[lastStatus.current](lastDistance.current));
+          }
         }
       }
-      prevDistance.current = d;
     } catch (e) {
       // A single failed reading must not end the session.
       setNotice(UI.hook.noticeSkipped);
@@ -110,7 +120,8 @@ export function useWarmerColder(target, onArrive) {
     }
 
     await resetTrack();
-    prevDistance.current = null;
+    lastDistance.current = null;
+    lastStatus.current = 'warmer';
     setPointCount(0);
     setTrend(null);
     setDistance(null);

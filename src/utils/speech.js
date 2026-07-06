@@ -1,23 +1,22 @@
 // On-device text-to-speech wrapper (spec §6).
+// Voice language follows the device locale, independent of the UI language.
 // A new utterance cancels any still-playing one so cues never lag reality.
 // On first use, picks the highest-quality available voice for the locale.
 
 import * as Speech from 'expo-speech';
-import { LANGUAGE, SPEECH_RATE, SPEECH_PITCH, SPEECH_VOICE } from '../config';
-import { PHRASES } from '../phrases';
-
-const set = PHRASES[LANGUAGE] || PHRASES.en;
+import { SPEECH_RATE, SPEECH_PITCH, SPEECH_VOICE } from '../config';
+import { deviceTTSLocale } from '../voices';
 
 // Voice quality rank: higher = better. iOS exposes 'Default', 'Enhanced', 'Premium'.
 const QUALITY_RANK = { Default: 0, Enhanced: 1, Premium: 2 };
 
 let resolvedVoice = SPEECH_VOICE; // null until pickBestVoice() runs (unless overridden in config)
-let voiceReady = SPEECH_VOICE !== null; // skip auto-select if config forces a specific voice
 
 async function pickBestVoice() {
+  if (SPEECH_VOICE !== null) return; // skip auto-select if config forces a specific voice
   try {
     const voices = await Speech.getAvailableVoicesAsync();
-    const localeLang = set.locale.split('-')[0]; // 'en' from 'en-US'
+    const localeLang = deviceTTSLocale.split('-')[0]; // 'en' from 'en-US'
 
     const candidates = voices.filter(
       (v) => v.language && v.language.toLowerCase().startsWith(localeLang.toLowerCase())
@@ -34,8 +33,6 @@ async function pickBestVoice() {
     resolvedVoice = candidates[0].identifier;
   } catch {
     // Leave resolvedVoice as null — OS picks a default.
-  } finally {
-    voiceReady = true;
   }
 }
 
@@ -44,7 +41,7 @@ pickBestVoice();
 
 function options() {
   return {
-    language: set.locale,
+    language: deviceTTSLocale,
     rate: SPEECH_RATE,
     pitch: SPEECH_PITCH,
     ...(resolvedVoice ? { voice: resolvedVoice } : {}),
@@ -52,14 +49,15 @@ function options() {
 }
 
 export function say(text) {
+  if (!text) return;
   Speech.stop();
   Speech.speak(text, options());
 }
 
 // Like say(), but returns a Promise that resolves when the utterance finishes
-// (or is stopped/errors). Use this when the caller must wait for speech to
-// complete before proceeding (e.g. the start announcement before the first tick).
+// (or is stopped/errors). Resolves immediately for null/empty text.
 export function sayAndWait(text) {
+  if (!text) return Promise.resolve();
   Speech.stop();
   return new Promise((resolve) => {
     Speech.speak(text, { ...options(), onDone: resolve, onStopped: resolve, onError: resolve });
