@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,36 +12,66 @@ import {
 import * as Location from 'expo-location';
 import { parseCoordinateInput, validateCoordinate } from '../utils/geo';
 import { RandomDestinationPicker } from '../utils/RandomDestinationPicker';
+import { getHomeLocation, saveHomeLocation } from '../utils/homeLocation';
 import { UI } from '../i18n';
 
 export default function SetupScreen({ onStart }) {
   const [coords, setCoords] = useState('');
   const [error, setError] = useState(null);
-  const [locating, setLocating] = useState(false);
+  const [notice, setNotice] = useState(null);
   const [picking, setPicking] = useState(false);
+  const [settingHome, setSettingHome] = useState(false);
+  const [home, setHome] = useState(null);
 
-  const useCurrent = async () => {
+  useEffect(() => {
+    getHomeLocation().then(setHome);
+  }, []);
+
+  const useHome = () => {
+    if (!home) return;
     setError(null);
-    setLocating(true);
+    setNotice(null);
+    setCoords(`${home.latitude.toFixed(6)}, ${home.longitude.toFixed(6)}`);
+  };
+
+  const setCurrentAsHome = async () => {
+    setError(null);
+    setNotice(null);
+    setSettingHome(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError(UI.setup.errPermission);
+        setError(UI.setup.errPermissionHome);
         return;
       }
       const pos = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
-      setCoords(`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`);
-    } catch (e) {
-      setError(UI.setup.errLocation);
+      const { latitude, longitude } = pos.coords;
+      await saveHomeLocation(latitude, longitude);
+      setHome({ latitude, longitude });
+      setNotice(UI.setup.homeSet);
+    } catch {
+      // GPS unavailable — fall back to the manually entered coordinates
+      const parsed = parseCoordinateInput(coords);
+      const err = parsed ? validateCoordinate(parsed.latStr, parsed.lonStr) : UI.geo.errFormat;
+      if (parsed && !err) {
+        const latitude = Number(parsed.latStr);
+        const longitude = Number(parsed.lonStr);
+        await saveHomeLocation(latitude, longitude);
+        setHome({ latitude, longitude });
+        setNotice(UI.setup.homeSet);
+      } else {
+        setError(UI.setup.errLocation);
+      }
     } finally {
-      setLocating(false);
+      setSettingHome(false);
     }
   };
 
   const pickRandom = async () => {
     setError(null);
+    setNotice(null);
     setPicking(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -71,6 +101,7 @@ export default function SetupScreen({ onStart }) {
     const err = validateCoordinate(parsed.latStr, parsed.lonStr);
     if (err) {
       setError(err);
+      setNotice(null);
       return;
     }
     setError(null);
@@ -99,15 +130,7 @@ export default function SetupScreen({ onStart }) {
           autoCapitalize="none"
         />
 
-        <Pressable style={styles.secondary} onPress={useCurrent} disabled={locating || picking}>
-          {locating ? (
-            <ActivityIndicator color="#F5EFE6" />
-          ) : (
-            <Text style={styles.secondaryText}>{UI.setup.btnCurrentLocation}</Text>
-          )}
-        </Pressable>
-
-        <Pressable style={styles.secondary} onPress={pickRandom} disabled={locating || picking}>
+        <Pressable style={styles.secondary} onPress={pickRandom} disabled={picking}>
           {picking ? (
             <ActivityIndicator color="#F5EFE6" />
           ) : (
@@ -115,6 +138,39 @@ export default function SetupScreen({ onStart }) {
           )}
         </Pressable>
 
+        <Pressable
+          style={[styles.secondary, !home && styles.secondaryDisabled]}
+          onPress={useHome}
+          disabled={!home || picking || settingHome}
+        >
+          <Text style={styles.secondaryText}>
+            {home
+              ? UI.setup.btnHome(home.latitude.toFixed(6), home.longitude.toFixed(6))
+              : UI.setup.btnHome('?', '?')}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.secondary}
+          onPress={setCurrentAsHome}
+          disabled={picking || settingHome}
+        >
+          {settingHome ? (
+            <ActivityIndicator color="#F5EFE6" />
+          ) : (
+            <Text style={styles.secondaryText}>
+              {home ? UI.setup.btnChangeHome : UI.setup.btnSetHome}
+            </Text>
+          )}
+        </Pressable>
+
+        {home ? (
+          <Text style={styles.homeCoords}>
+            {UI.setup.homeDisplay(home.latitude.toFixed(6), home.longitude.toFixed(6))}
+          </Text>
+        ) : null}
+
+        {notice ? <Text style={styles.notice}>{notice}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <Pressable style={styles.primary} onPress={start}>
@@ -154,7 +210,10 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   secondary: { paddingVertical: 12, alignItems: 'center', marginBottom: 8 },
+  secondaryDisabled: { opacity: 0.35 },
   secondaryText: { color: '#4DA8FF', fontSize: 15, fontWeight: '600' },
+  homeCoords: { color: '#7A7A88', fontSize: 13, marginBottom: 8, textAlign: 'center' },
+  notice: { color: '#4CAF50', fontSize: 14, marginBottom: 8, textAlign: 'center' },
   error: { color: '#FF6B6B', fontSize: 14, marginBottom: 12, textAlign: 'center' },
   primary: {
     backgroundColor: '#FF8A4C',
