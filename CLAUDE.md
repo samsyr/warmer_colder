@@ -18,11 +18,15 @@ npx expo start             # Metro + QR code (dev client / general)
 ./start_expo_go.sh         # convenience wrapper → script/start.sh --go (Expo Go)
 ./script/force_stop.sh     # kill Metro (8081), expo, metro, ngrok
 ./script/force_clean_start.sh [args]  # nuke node_modules/.expo/caches, reinstall, restart (forwards args) — use when Metro is wedged
+npm test                   # Jest (jest-expo preset) — unit tests for pure logic (src/utils/*.test.js)
+npm run test:web           # Playwright smoke test — starts the web dev server, loads it headless,
+                            # fails on any HTTP/console/page error or missing expected content
+npm run test:all           # both, in sequence
 ```
 
 EAS builds are configured in `eas.json`: `eas build --profile development` (internal dev client) and `--profile production`.
 
-There is **no test runner and no linter configured** — no `jest`, `eslint`, or `prettier`. Do not invent `npm test` / `npm run lint` commands. Verification is manual on a physical device (a simulator can be fed a mock location but won't move realistically; real GPS requires being outdoors).
+There is **no linter configured** — no `eslint` or `prettier`; don't invent `npm run lint`. GPS/speech/native behaviour still has no automated coverage and is verified manually on a physical device (a simulator can be fed a mock location but won't move realistically; real GPS requires being outdoors) — the automated tests above only cover pure logic and the web dev target. `.claude/agents/testing-agent.md` defines a subagent whose job is to keep this test set current as features are added; invoke it (or ask for it by name) after implementing a feature, rather than letting test coverage silently fall behind.
 
 ## Architecture
 
@@ -40,9 +44,11 @@ There is **no test runner and no linter configured** — no `jest`, `eslint`, or
 
 **Track logging (`src/utils/track.js`):** `expo-file-system` has no native append, so the full file is rewritten each tick from an in-memory `lines` array. The file lives in the app's sandboxed Documents directory (`Paths.document`). On iOS it is **not user-accessible** without adding `UIFileSharingEnabled` / `LSSupportsOpeningDocumentsInPlace` to `app.json` → `ios.infoPlist` (not currently set), or an in-app share sheet.
 
-**Other utilities:** `src/utils/geo.js` (haversine + coordinate validation), `src/utils/RandomDestinationPicker.js` (forward-geodesy class that picks a point exactly 1 km from an origin for the Setup screen's "random destination" button).
+**Other utilities:** `src/utils/geo.js` (haversine + coordinate validation), `src/utils/RandomDestinationPicker.js` (forward-geodesy class that picks a point exactly 1 km from an origin for the Setup screen's "random destination" button), `src/utils/homeLocation.js` (persists a saved Home location via `expo-file-system`, read/written from the Setup screen).
+
+**Any module that touches a native-only API needs a `*.web.js` counterpart, or the web build crashes at runtime.** Metro resolves `foo.web.js` over `foo.js` automatically for the web platform — there's no compile-time check that one exists, so a missing counterpart doesn't fail until the module is actually invoked in a browser (e.g. `homeLocation.js` used `expo-file-system`'s `File`/`Paths` directly with no `homeLocation.web.js`, and crashed the whole page on mount with `this.validatePath is not a function` — caught by `npm run test:web`, not by Metro). Existing examples: `track.js`/`track.web.js` (in-memory instead of on-disk), `speech.js`/`speech.web.js` (Web Speech API instead of `expo-speech`), `demoJitter.js`/`demoJitter.web.js`, `homeLocation.js`/`homeLocation.web.js`.
 
 ## Notes
 
 - `app.json` configures iOS/Android permission strings and bundle IDs; the React Compiler is enabled via `experiments.reactCompiler`. The Hermes engine's `Intl` unit support can differ from Node's — `voices.js` wraps the `Intl.NumberFormat` call in try/catch and falls back to the bare number.
-- The README's "Project map" is partially stale (it lists a removed `src/phrases.js` and an Expo-Go-only flow); trust the code and this file over it.
+- If the README's "Project map" or "Testing" sections and the actual `src/` tree or `package.json` scripts ever disagree, trust the code and this file over the README, and fix the README while you're there.

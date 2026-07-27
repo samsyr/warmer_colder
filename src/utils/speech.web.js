@@ -11,10 +11,9 @@
 // This wrapper handles all three, and never blocks the game loop if the browser
 // has no voices at all.
 
-import { LANGUAGE, SPEECH_RATE, SPEECH_PITCH } from '../config';
-import { PHRASES } from '../phrases';
+import { SPEECH_RATE, SPEECH_PITCH } from '../config';
+import { deviceTTSLocale } from '../voices';
 
-const set = PHRASES[LANGUAGE] || PHRASES.en;
 const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
 
 // --- (1) keep a populated voice list -------------------------------------
@@ -29,7 +28,7 @@ if (synth) {
 
 function pickVoice() {
   if (!voices.length) return null;
-  const lang = (set.locale || 'en-US').toLowerCase();
+  const lang = deviceTTSLocale.toLowerCase();
   const short = lang.split('-')[0];
   return (
     voices.find((v) => v.lang?.toLowerCase() === lang) ||
@@ -60,7 +59,7 @@ if (typeof window !== 'undefined') {
 
 function build(text) {
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = set.locale;
+  u.lang = deviceTTSLocale;
   u.rate = SPEECH_RATE;
   u.pitch = SPEECH_PITCH;
   const v = pickVoice();

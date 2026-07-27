@@ -1,13 +1,13 @@
-# Warmer / Colder — PoC
+# Warmer / Colder
 
 A GPS "getting warmer, getting colder" game. Enter a target's coordinates and the
 phone speaks **warmer** or **colder** every 10 seconds, plus the straight-line
 distance left, until you arrive within 100 m. Every reading is logged to a text
-file. See `TECHNICAL_SPECIFICATION.md` for the full brief.
+file. See `TECHNICAL_SPECIFICATION.md` for the original build brief.
 
 ## Stack
 Expo (React Native) + JavaScript — `expo-location`, `expo-speech`,
-`expo-file-system`. Chosen so the PoC runs on a real phone via Expo Go in minutes.
+`expo-file-system`. Chosen so it runs on a real phone via Expo Go in minutes.
 
 ## Run it
 ```bash
@@ -79,22 +79,41 @@ shims:
 Everything adjustable lives in `src/config.js`: interval, arrival radius,
 jitter dead-band, language (`en` / `fi`), and the track filename.
 
-## Project map
-```
-App.js                      setup → game → arrived state machine
-TECHNICAL_SPECIFICATION.md  the build brief
-src/config.js               tunable parameters
-src/phrases.js              spoken phrase sets (en / fi)
-src/screens/                SetupScreen, GameScreen, ArrivedScreen
-src/hooks/useWarmerColder.js core loop (permissions, interval, compare, speak, log)
-src/utils/geo.js            haversine distance + coordinate validation
-src/utils/speech.js         text-to-speech wrapper
-src/utils/track.js          plain-text track logging (native/production)
-src/utils/track.web.js      in-memory track stub for the web dev/test build
-src/utils/trackFormat.js    shared control-point line formatter (both targets)
+## Testing
+There's no on-device automation (GPS/speech behaviour is still verified manually
+on a physical phone outdoors) but the pure logic and the web dev target are
+covered automatically:
+
+```bash
+npm test          # Jest — pure-logic unit tests (geo, track formatting, random destination)
+npm run test:web  # Playwright — starts the web dev server, loads it headless, checks
+                   # for a 200 response, no console/page errors, and expected rendered text
+npm run test:all  # both, in sequence
 ```
 
-## Notes / limitations (PoC)
+See `.claude/agents/testing-agent.md` for the agent responsible for keeping this
+test set current as features are added.
+
+## Project map
+```
+App.js                       setup → game → arrived state machine
+TECHNICAL_SPECIFICATION.md   the original build brief
+src/config.js                tunable parameters
+src/i18n.js                  on-screen UI text (en / fi)
+src/voices.js                spoken trend words + locale-aware number/unit formatting
+src/screens/                 SetupScreen, GameScreen, ArrivedScreen
+src/hooks/useWarmerColder.js core loop (permissions, interval, compare, speak, log)
+src/utils/geo.js             haversine distance + coordinate validation
+src/utils/speech.js          text-to-speech wrapper (native, expo-speech)
+src/utils/speech.web.js      text-to-speech wrapper (web, browser Web Speech API)
+src/utils/track.js           plain-text track logging (native/production)
+src/utils/track.web.js       in-memory track stub for the web dev/test build
+src/utils/trackFormat.js     shared control-point line formatter (both targets)
+src/utils/homeLocation.js    saved Home location (native, expo-file-system)
+src/utils/homeLocation.web.js saved Home location (web, in-memory only)
+```
+
+## Notes / limitations
 - Foreground only; no background or locked-screen tracking.
 - "App closes itself" on arrival isn't portable (iOS forbids self-exit), so the
   Arrived screen is the end state; Android offers a best-effort *Close app*.
